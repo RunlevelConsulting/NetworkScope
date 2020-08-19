@@ -7,8 +7,7 @@
 # Website: runlevelconsulting.co.uk                                                         #
 #                                                                                           #
 # Purpose: Network Scope runs a scan against a network range of your choice and gather that #
-#	   data into a nifty webpage or a single data file. Furthermore, it's modular so    #
-#	   you can create custom modules to add more data to the output.		    #
+#	   data into a nifty webpage or a single data file.                                 #
 #											    #
 #############################################################################################
 
@@ -26,7 +25,6 @@ WEBPATH=./index.html		# The full path of the page you want the data output to
 SCANTYPE="common"		# common (100 Ports) / most (1000 ports) / all (all the things) / specific (scan certain ports)
 PORTSTOSCAN=""			# (Only if SCANTYPE=specific). Format: 22,80,443-450 | Would scan ports 22, 80, and 443-450. NO SPACES!
 SPEED=4				# Scan Speed: 1 (Slowest), 5 (Fastest)
-USEMODULES=0			# Set this value to 1 to use custom modules (foo.mod)
 DEBUG=0				# Debug Mode - Setting this value to 1 will stop the data files being deleted
 
 
@@ -34,7 +32,7 @@ DEBUG=0				# Debug Mode - Setting this value to 1 will stop the data files being
 #########################################
 ## Variables and Argument Handling     ##
 #########################################
-INSTRUCTIONS="\nUsage:   ./networkscope.sh --ip-ranges=192.168.1.0/24,192.168.2/24,10.10.10.10\n\nMandatory Flags:\n         --ip-ranges=                   Comma-separated list of IP ranges to scan\n\n	 Can be a single IP:		192.168.1.45\n	 Can be a CIDR range:		192.168.1.0/24\n	 Can be a from/to range:	192.168.1.0-10\n\n\nOptional Flags:\n         --dont-create-webpage			Do not construct an HTML webpage\n         --webpage-path=/path/to/page.html	Path to file in which to construct webpage\n         --scan-type=				Port scan depth (common, most, all, specific)\n         --scan-ports=				Specific ports to scan\n         --scan-speed=				Scan Speed: 1 (Slowest), 5 (Fastest)\n         --use-modules				Enable custom modules\n         --debug				Don't delete data files upon completion\n         -?					Show Instructions\n         --help					Show Instructions\n\n"
+INSTRUCTIONS="\nUsage:   ./networkscope.sh --ip-ranges=192.168.1.0/24,192.168.2/24,10.10.10.10\n\nMandatory Flags:\n         --ip-ranges=                   Comma-separated list of IP ranges to scan\n\n	 Can be a single IP:		192.168.1.45\n	 Can be a CIDR range:		192.168.1.0/24\n	 Can be a from/to range:	192.168.1.0-10\n\n\nOptional Flags:\n         --dont-create-webpage			Do not construct an HTML webpage\n         --webpage-path=/path/to/page.html	Path to file in which to construct webpage\n         --scan-type=				Port scan depth (common, most, all, specific)\n         --scan-ports=				Specific ports to scan\n         --scan-speed=				Scan Speed: 1 (Slowest), 5 (Fastest)\n         --debug				Don't delete data files upon completion\n         -?					Show Instructions\n         --help					Show Instructions\n\n"
 MESSAGE="\nThanks for using Network Scope!\nNmap can typically take a few seconds to scan a single host, bring snacks and entertainment if scanning a large range of IP's.\nNmap's OS detection is, on occasion, completely incorrect. You may want to enable Debug Mode to analyse the data more closely.\n\nContribute to this code at: https://github.com/RunlevelConsulting\n\n--------------------------------------------\n"
 FINISHED="\n----------------- Finished -----------------\n\n"
 SCRIPTPATH=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )
@@ -55,7 +53,6 @@ do
     "--scan-type="* )			SCANTYPE="${opt#*=}";;
     "--scan-ports="* )			PORTSTOSCAN="${opt#*=}";;
     "--scan-speed="* )			SPEED="${opt#*=}";;
-    "--use-modules" )			USEMODULES=1;;
     "--debug" )				DEBUG=1;;
     "--help | -?" )			echo -e "${INSTRUCTIONS}"; exit 1;;
     *)					echo -e "${INSTRUCTIONS}"; exit 1;;
@@ -120,7 +117,6 @@ scanSummary () {
 
   SUMM_IPRANGES=$(echo ${IPRANGES[@]} | sed 's/ /\n                        /g')
   [ "${CREATEWEBPAGE}" -eq 0 ] && 	SUMM_CREATEWEBPAGE="No" WEBPATH="N/A" || SUMM_CREATEWEBPAGE="Yes"
-  [ "${USEMODULES}" -eq 0 ] && 		SUMM_USEMODULES="No" || SUMM_USEMODULES="Yes"
   [ "${DEBUG}" -eq 0 ] && 		SUMM_DEBUG="No" || SUMM_DEBUG="Yes"
   [ "${SCANTYPE}" != "specific" ] && 	PORTSTOSCAN="N/A"
 
@@ -131,7 +127,6 @@ scanSummary () {
   Scan Type:		${SCANTYPE^} Ports
   Scan Ports:		${PORTSTOSCAN}
   Scan Speed:		${SPEED} out of 5
-  Modules Enabled:	${SUMM_USEMODULES}
   Debug Mode:		${SUMM_DEBUG}
 
 --------------------------------------------
@@ -223,16 +218,6 @@ for IPRANGE in "${IPRANGES[@]}"; do
       echo "RESULT[${IPCOUNT}][${ENTRYCOUNT}][3]=\"${RESULT_HOSTNAME}\";" >> ${DATAPATH}
       echo "RESULT[${IPCOUNT}][${ENTRYCOUNT}][4]=\"<select>${RESULT_PORTS}</select>\";" >> ${DATAPATH}
       unset RESULT_PORTS
-
-
-      #########################################
-      ## Run modules (.mod files)	     ##
-      #########################################
-      if [[ ${USEMODULES} -eq 1 ]]; then
-        for file in ${SCRIPTPATH}/*.mod ; do
-          if [ -f "${file}" ] ; then          source ${file};        fi
-        done
-      fi
 
     ((ENTRYCOUNT++))
     fi
